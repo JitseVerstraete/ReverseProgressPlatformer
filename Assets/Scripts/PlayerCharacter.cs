@@ -5,8 +5,9 @@ public class PlayerCharacter : MonoBehaviour
     [SerializeField] private float _movementSpeed = 5f;
     [SerializeField] private float _acceleration = 20f;
     [SerializeField] private float _jumpStrength = 10f;
+    [SerializeField] private float _gravityStrength = 20f;
 
-    private Rigidbody _rigidBody = null;
+    private CharacterController _charController = null;
 
     private Vector2 _velocity = Vector2.zero;
 
@@ -14,8 +15,8 @@ public class PlayerCharacter : MonoBehaviour
     {
         _velocity = new Vector2(0, 0);
 
-        _rigidBody = GetComponent<Rigidbody>();
-        if (_rigidBody == null)
+        _charController = GetComponent<CharacterController>();
+        if (_charController == null)
         {
             Debug.Log("no rigidbody found on player character object!");
         }
@@ -38,30 +39,42 @@ public class PlayerCharacter : MonoBehaviour
             Jump();
         }
 
-        Debug.Log(_rigidBody.velocity.x);
+        HandleGravity(Time.deltaTime);
+        _charController.Move(new Vector3(_velocity.x * Time.deltaTime, _velocity.y * Time.deltaTime, 0));
+    }
+
+    private void FixedUpdate()
+    {
+
     }
 
     void Jump()
     {
-        _rigidBody.AddForce(new Vector3(0, _jumpStrength, 0), ForceMode.VelocityChange);
+        _velocity.y += _jumpStrength;
+        Debug.Log(_velocity.y);
     }
 
-    void Move(float intput)
+    void Move(float dirInput)
     {
-        if (intput == 0)
+        if (dirInput == 0)
         {
             return;
         }
 
+        dirInput = Mathf.Clamp(dirInput, -1, 1);
 
-        intput = Mathf.Clamp(intput, -1, 1);
+        _velocity.x += dirInput * _acceleration * Time.deltaTime;
+        _velocity.x = Mathf.Clamp(_velocity.x, -_movementSpeed, _movementSpeed);
+    }
 
-
-        if (_rigidBody.velocity.x > -_movementSpeed || _rigidBody.velocity.x * intput <= 0)
+    void HandleGravity(float delta)
+    {
+        if (_velocity.y < 0 && _charController.isGrounded)
         {
-            _rigidBody.velocity += new Vector3(intput * _acceleration, 0, 0);
-            _rigidBody.velocity = new Vector3(Mathf.Clamp(_rigidBody.velocity.x, -_movementSpeed, _movementSpeed), _rigidBody.velocity.y, _rigidBody.velocity.z);
+            _velocity.y = 0;
+            return;
         }
 
+        _velocity.y -= _gravityStrength * delta;
     }
 }
