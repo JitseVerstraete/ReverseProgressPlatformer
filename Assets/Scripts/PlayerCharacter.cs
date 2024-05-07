@@ -10,7 +10,7 @@ public class PlayerCharacter : MonoBehaviour
     [SerializeField] private float _groundedDrag = 2f;
     [SerializeField] private float _airDrag = 0.4f;
 
-    
+
     private Vector2 _velocity;
 
     private Vector2 _rightMovementVector;
@@ -21,9 +21,6 @@ public class PlayerCharacter : MonoBehaviour
     private CharacterController _charController = null;
 
     private PlayerControls _controls;
-
-    private Vector3 _debugGizmo;
-    private Ray _floorRay;
 
     void Start()
     {
@@ -46,7 +43,8 @@ public class PlayerCharacter : MonoBehaviour
     private void Update()
     {
 
-        //Vector2 newVel = _charController.velocity;
+        Vector2 realVel = _charController.velocity;
+        ValidateVelocity(realVel);
 
         DoFloorRaycast();
         ApplyDrag(ref _velocity);
@@ -54,6 +52,15 @@ public class PlayerCharacter : MonoBehaviour
         HandleGravity(ref _velocity);
 
         _charController.Move(new Vector3(_velocity.x * Time.deltaTime, _velocity.y * Time.deltaTime, 0));
+    }
+
+    private void ValidateVelocity(Vector2 realVelocity)
+    {
+        float tx = realVelocity.x == 0 ? 1 : Mathf.Clamp01((_velocity.x / realVelocity.x) * Time.deltaTime);
+        _velocity.x = Mathf.Lerp(_velocity.x, realVelocity.x, tx);
+
+        float ty = realVelocity.y == 0 ? 1 : Mathf.Clamp01((_velocity.y / realVelocity.y) * Time.deltaTime);
+        _velocity.y = Mathf.Lerp(_velocity.y, realVelocity.y, ty);
     }
 
     private void HandleMovementInput(ref Vector2 vel)
@@ -64,10 +71,9 @@ public class PlayerCharacter : MonoBehaviour
             _horizontalMovementInput = Mathf.Clamp(_horizontalMovementInput, -1, 1);
 
             vel += ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * _acceleration * Time.deltaTime));
-            //vel += (Vector2.right * (_horizontalMovementInput * _acceleration * Time.deltaTime));
             vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
-            _debugGizmo = ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * _acceleration));
         }
+
         Debug.Log(_charController.isGrounded);
 
         if (_jumpInput)
@@ -89,7 +95,6 @@ public class PlayerCharacter : MonoBehaviour
         Physics.Raycast(floorRay, out hitInfo);
         _rightMovementVector = (Vector2)Vector3.Cross(hitInfo.normal, Vector3.forward);
         _rightMovementVector.Normalize();
-        _floorRay = floorRay;
     }
 
     private void ApplyDrag(ref Vector2 vel)
@@ -106,19 +111,10 @@ public class PlayerCharacter : MonoBehaviour
     private void OnJump(InputAction.CallbackContext context)
     {
         _jumpInput = true;
-        Debug.LogError("jump!");
     }
 
     private void OnMove(InputAction.CallbackContext context)
     {
         _horizontalMovementInput = context.ReadValue<float>();
-        Debug.LogError("move!");
     }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawRay(transform.position, _debugGizmo);
-        Gizmos.DrawRay(_floorRay);
-    }
-
 }
