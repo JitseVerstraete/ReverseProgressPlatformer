@@ -1,19 +1,39 @@
+using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerCharacter : MonoBehaviour
 {
     [SerializeField] private float _movementSpeed = 5f;
     [SerializeField] private float _acceleration = 20f;
     [SerializeField] private float _jumpStrength = 10f;
-    [SerializeField] private float _gravityStrength = 20f;
+    [SerializeField] private float _groundedDrag = 2f;
+    [SerializeField] private float _airDrag = 0.4f;
+
+    
+    private Vector2 _velocity;
+
+    private Vector2 _rightMovementVector;
+
+    private float _horizontalMovementInput;
+    private bool _jumpInput;
 
     private CharacterController _charController = null;
 
-    private Vector2 _velocity = Vector2.zero;
+    private PlayerControls _controls;
+
+    private Vector3 _debugGizmo;
+    private Ray _floorRay;
 
     void Start()
     {
-        _velocity = new Vector2(0, 0);
+        _controls = new PlayerControls();
+        _controls.Player.Jump.started += OnJump;
+        _controls.Player.Jump.canceled += OnJump;
+        _controls.Player.Jump.Enable();
+        _controls.Player.Move.started += OnMove;
+        _controls.Player.Move.canceled += OnMove;
+        _controls.Player.Move.Enable();
 
         _charController = GetComponent<CharacterController>();
         if (_charController == null)
@@ -22,59 +42,83 @@ public class PlayerCharacter : MonoBehaviour
         }
     }
 
-    void Update()
+
+    private void Update()
     {
-        if (Input.GetKey(KeyCode.A))
-        {
-            Move(-1);
-        }
 
-        if (Input.GetKey(KeyCode.D))
-        {
-            Move(1);
-        }
+        //Vector2 newVel = _charController.velocity;
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Jump();
-        }
+        DoFloorRaycast();
+        ApplyDrag(ref _velocity);
+        HandleMovementInput(ref _velocity);
+        HandleGravity(ref _velocity);
 
-        HandleGravity(Time.deltaTime);
         _charController.Move(new Vector3(_velocity.x * Time.deltaTime, _velocity.y * Time.deltaTime, 0));
     }
 
-    private void FixedUpdate()
+    private void HandleMovementInput(ref Vector2 vel)
     {
 
-    }
-
-    void Jump()
-    {
-        _velocity.y += _jumpStrength;
-        Debug.Log(_velocity.y);
-    }
-
-    void Move(float dirInput)
-    {
-        if (dirInput == 0)
+        if (_horizontalMovementInput != 0)
         {
-            return;
+            _horizontalMovementInput = Mathf.Clamp(_horizontalMovementInput, -1, 1);
+
+            vel += ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * _acceleration * Time.deltaTime));
+            //vel += (Vector2.right * (_horizontalMovementInput * _acceleration * Time.deltaTime));
+            vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
+            _debugGizmo = ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * _acceleration));
         }
+        Debug.Log(_charController.isGrounded);
 
-        dirInput = Mathf.Clamp(dirInput, -1, 1);
-
-        _velocity.x += dirInput * _acceleration * Time.deltaTime;
-        _velocity.x = Mathf.Clamp(_velocity.x, -_movementSpeed, _movementSpeed);
-    }
-
-    void HandleGravity(float delta)
-    {
-        if (_velocity.y < 0 && _charController.isGrounded)
+        if (_jumpInput)
         {
-            _velocity.y = 0;
-            return;
+            if (_charController.isGrounded)
+            {
+                vel.y = _jumpStrength;
+            }
+            _jumpInput = false;
         }
-
-        _velocity.y -= _gravityStrength * delta;
     }
+
+
+    private void DoFloorRaycast()
+    {
+        Ray floorRay = new Ray(new Vector3(_charController.transform.position.x + _charController.center.x, _charController.bounds.min.y, _charController.transform.position.z + _charController.center.z),
+                            new Vector3(0, -1, 0));
+        RaycastHit hitInfo;
+        Physics.Raycast(floorRay, out hitInfo);
+        _rightMovementVector = (Vector2)Vector3.Cross(hitInfo.normal, Vector3.forward);
+        _rightMovementVector.Normalize();
+        _floorRay = floorRay;
+    }
+
+    private void ApplyDrag(ref Vector2 vel)
+    {
+        float dragModifier = Mathf.Clamp01(1f - ((_charController.isGrounded ? _groundedDrag : _airDrag) * Time.deltaTime));
+        vel.x *= dragModifier;
+    }
+
+    void HandleGravity(ref Vector2 newVel)
+    {
+        newVel.y += Physics.gravity.y * Time.deltaTime;
+    }
+
+    private void OnJump(InputAction.CallbackContext context)
+    {
+        _jumpInput = true;
+        Debug.LogError("jump!");
+    }
+
+    private void OnMove(InputAction.CallbackContext context)
+    {
+        _horizontalMovementInput = context.ReadValue<float>();
+        Debug.LogError("move!");
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawRay(transform.position, _debugGizmo);
+        Gizmos.DrawRay(_floorRay);
+    }
+
 }
