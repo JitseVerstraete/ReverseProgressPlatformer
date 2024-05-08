@@ -74,7 +74,7 @@ public class PlayerCharacter : MonoBehaviour
             vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
         }
 
-        Debug.Log(_charController.isGrounded);
+        //Debug.Log(_charController.isGrounded);
 
         if (_jumpInput)
         {
@@ -110,11 +110,13 @@ public class PlayerCharacter : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
+        Debug.Log("jump");
         _jumpInput = true;
     }
 
     private void OnMove(InputAction.CallbackContext context)
     {
+        Debug.Log("move");
         _horizontalMovementInput = context.ReadValue<float>();
     }
 }
