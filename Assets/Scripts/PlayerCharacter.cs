@@ -4,11 +4,15 @@ using UnityEngine.InputSystem;
 
 public class PlayerCharacter : MonoBehaviour
 {
+
+    [Header("Movement settings")]
+
     [SerializeField] private float _movementSpeed = 5f;
     [SerializeField] private float _acceleration = 20f;
     [SerializeField] private float _jumpStrength = 10f;
     [SerializeField] private float _groundedDrag = 2f;
     [SerializeField] private float _airDrag = 0.4f;
+
 
 
     private Vector2 _velocity;
@@ -32,12 +36,14 @@ public class PlayerCharacter : MonoBehaviour
         _controls.Player.Move.canceled += OnMove;
         _controls.Player.Move.Enable();
 
+
         _charController = GetComponent<CharacterController>();
         if (_charController == null)
         {
             Debug.Log("no rigidbody found on player character object!");
         }
     }
+
 
 
     private void Update()
@@ -110,13 +116,11 @@ public class PlayerCharacter : MonoBehaviour
 
     private void OnJump(InputAction.CallbackContext context)
     {
-        Debug.Log("jump");
         _jumpInput = true;
     }
 
     private void OnMove(InputAction.CallbackContext context)
     {
-        Debug.Log("move");
         _horizontalMovementInput = context.ReadValue<float>();
     }
 }
