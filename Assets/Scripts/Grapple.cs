@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,14 +15,16 @@ public class Grapple : MonoBehaviour
 
     [SerializeField] private GameObject _hook;
     [Header("Grapple settings")]
-    [SerializeField] private float _grappleLength;
-    [SerializeField] private float _grappleSpeed;
-    [SerializeField] private float _reelInSpeed;
+    [SerializeField] private float _grappleLength = 5f;
+    [SerializeField] private float _grappleSpeed = 20f;
+    [SerializeField] private float _reelInSpeed = 3f;
 
 
     private Vector3 _shootDirection = Vector3.zero;
     private float _currentGrappleDistance = 0;
     private GrappleMode _grappleState = GrappleMode.None;
+
+    private Vector3 _attachedPos = new Vector3();
 
 
     private PlayerControls _controls;
@@ -44,6 +47,11 @@ public class Grapple : MonoBehaviour
             case GrappleMode.Shooting:
                 _currentGrappleDistance += _grappleSpeed * Time.deltaTime;
 
+                if (_hook != null)
+                {
+                    _hook.transform.position = transform.position + _shootDirection * _currentGrappleDistance;
+                }
+
                 if (_currentGrappleDistance > _grappleLength)
                 {
                     ResetGrapple();
@@ -51,6 +59,8 @@ public class Grapple : MonoBehaviour
 
                 break;
             case GrappleMode.Attached:
+                _hook.transform.position = _attachedPos;
+
                 break;
             default:
                 break;
@@ -62,7 +72,6 @@ public class Grapple : MonoBehaviour
     {
         if (context.phase == InputActionPhase.Started)
         {
-            Debug.Log("grapple started!");
             Vector3 clickPoint = Camera.main.ScreenToWorldPoint(new Vector3(Mouse.current.position.x.value, Mouse.current.position.y.value, 0.5f));
             Vector3 clickDir = (clickPoint - Camera.main.transform.position).normalized;
 
@@ -85,12 +94,48 @@ public class Grapple : MonoBehaviour
     {
         _grappleState = GrappleMode.None;
         _currentGrappleDistance = 0;
+        _hook.transform.position = transform.position;
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, _shootDirection * _currentGrappleDistance);
+
+        Gizmos.color = Color.blue;
+        if (_grappleState == GrappleMode.Attached)
+        {
+            Gizmos.DrawLine(transform.position, _attachedPos);
+        }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (_grappleState != GrappleMode.Shooting)
+        {
+            return;
+        }
+
+        if (other.attachedRigidbody != null)
+        {
+            Debug.Log(other.attachedRigidbody.gameObject.name);
+            Platform platformComp = other.attachedRigidbody.GetComponent<Platform>();
+            if (platformComp != null)
+            {
+                if (platformComp.Grappleable)
+                {
+                    AttachGrapple(_hook.transform.position);
+                }
+                else
+                {
+                    Debug.Log("wrong platform");
+                    ResetGrapple();
+                }
+            }
+        }
+    }
+
+    private void AttachGrapple(Vector3 contactPos)
+    {
+        _grappleState = GrappleMode.Attached;
+        _attachedPos = contactPos;
+    }
 }
