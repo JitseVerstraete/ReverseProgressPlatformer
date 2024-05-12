@@ -24,6 +24,8 @@ public class Grapple : MonoBehaviour
     private float _currentGrappleDistance = 0;
     private GrappleMode _grappleState = GrappleMode.None;
 
+    private Vector3 _attachedPos = new Vector3();
+
 
     private PlayerControls _controls;
 
@@ -57,7 +59,7 @@ public class Grapple : MonoBehaviour
 
                 break;
             case GrappleMode.Attached:
-
+                _hook.transform.position = _attachedPos;
 
                 break;
             default:
@@ -97,20 +99,36 @@ public class Grapple : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, _shootDirection * _currentGrappleDistance);
+
+        Gizmos.color = Color.blue;
+        if (_grappleState == GrappleMode.Attached)
+        {
+            Gizmos.DrawLine(transform.position, _attachedPos);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        if (_grappleState != GrappleMode.Shooting)
+        {
+            return;
+        }
+
         if (other.attachedRigidbody != null)
         {
             Debug.Log(other.attachedRigidbody.gameObject.name);
             Platform platformComp = other.attachedRigidbody.GetComponent<Platform>();
             if (platformComp != null)
             {
-                Debug.Log("terrain grappled!");
-                AttachGrapple(_hook.transform.position);
+                if (platformComp.Grappleable)
+                {
+                    AttachGrapple(_hook.transform.position);
+                }
+                else
+                {
+                    Debug.Log("wrong platform");
+                    ResetGrapple();
+                }
             }
         }
     }
@@ -118,5 +136,6 @@ public class Grapple : MonoBehaviour
     private void AttachGrapple(Vector3 contactPos)
     {
         _grappleState = GrappleMode.Attached;
+        _attachedPos = contactPos;
     }
 }
