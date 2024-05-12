@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 public class PlayerCharacter : MonoBehaviour
 {
 
+    [SerializeField] private Grapple _grapple;
+
     [Header("Movement settings")]
 
     [SerializeField] private float _movementSpeed = 5f;
