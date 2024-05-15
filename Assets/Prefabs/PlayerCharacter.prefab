@@ -186,8 +186,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93d07901917e71e4b91258b81948c13d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _grapple: {fileID: 1817748921969772650}
   _movementSpeed: 6
   _acceleration: 50
+  _airAccelerationModifier: 0.2
   _jumpStrength: 10
   _groundedDrag: 5
   _airDrag: 0.4
@@ -305,6 +307,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c5a4f292d9611874d90a749a05130c43, type: 3}
+--- !u!114 &1817748921969772650 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1151503083760681121, guid: c5a4f292d9611874d90a749a05130c43,
+    type: 3}
+  m_PrefabInstance: {fileID: 1640160151040755915}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e069f8726efa4b04f84546b070189fdb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5323539113423125265 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6855048634660205530, guid: c5a4f292d9611874d90a749a05130c43,

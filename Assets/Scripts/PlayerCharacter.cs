@@ -11,6 +11,8 @@ public class PlayerCharacter : MonoBehaviour
 
     [SerializeField] private float _movementSpeed = 5f;
     [SerializeField] private float _acceleration = 20f;
+    [SerializeField, Range(0f, 1f)] private float _airAccelerationModifier = 0.2f;
+    [SerializeField] private float _grappleSwingAccelleration = 8f;
     [SerializeField] private float _jumpStrength = 10f;
     [SerializeField] private float _groundedDrag = 2f;
     [SerializeField] private float _airDrag = 0.4f;
@@ -77,10 +79,29 @@ public class PlayerCharacter : MonoBehaviour
 
         if (_horizontalMovementInput != 0)
         {
-            _horizontalMovementInput = Mathf.Clamp(_horizontalMovementInput, -1, 1);
+            if (_grapple != null && _grapple.GrappleState == Grapple.GrappleMode.Attached && Vector3.Distance(transform.position, _grapple.AttachedPos) >= _grapple.CurrentGrappleDistance * 0.95f)
+            {
+                Debug.Log("grapple movement");
 
-            vel += ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * _acceleration * Time.deltaTime));
-            vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
+                Vector2 grappledir = (transform.position - _grapple.AttachedPos);
+                float grappleAngleRad = MathF.Atan2(grappledir.y, grappledir.x);
+
+                Vector2 tanDir = new Vector2(-Mathf.Sin(grappleAngleRad), Mathf.Cos(grappleAngleRad)).normalized;
+
+                vel += tanDir * _horizontalMovementInput * _grappleSwingAccelleration * Time.deltaTime;
+
+            }
+            else
+            {
+
+                _horizontalMovementInput = Mathf.Clamp(_horizontalMovementInput, -1, 1);
+
+                float accel = _charController.isGrounded ? _acceleration : _acceleration * _airAccelerationModifier;
+                Debug.Log(_airAccelerationModifier);
+
+                vel += ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * accel * Time.deltaTime));
+                vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
+            }
         }
 
         //Debug.Log(_charController.isGrounded);
