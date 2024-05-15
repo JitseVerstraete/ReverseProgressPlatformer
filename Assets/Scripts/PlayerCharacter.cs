@@ -46,11 +46,8 @@ public class PlayerCharacter : MonoBehaviour
         }
     }
 
-
-
     private void Update()
     {
-
         Vector2 realVel = _charController.velocity;
         ValidateVelocity(realVel);
 
@@ -59,7 +56,12 @@ public class PlayerCharacter : MonoBehaviour
         HandleMovementInput(ref _velocity);
         HandleGravity(ref _velocity);
 
-        _charController.Move(new Vector3(_velocity.x * Time.deltaTime, _velocity.y * Time.deltaTime, 0));
+        Vector2 grappleMovementCorrection = Vector2.zero;
+        Debug.Log(_velocity);
+        HandleGrapple(out grappleMovementCorrection, ref _velocity);
+
+
+        _charController.Move(new Vector3(_velocity.x * Time.deltaTime + grappleMovementCorrection.x, _velocity.y * Time.deltaTime + grappleMovementCorrection.y, 0));
     }
 
     private void ValidateVelocity(Vector2 realVelocity)
@@ -116,6 +118,33 @@ public class PlayerCharacter : MonoBehaviour
         newVel.y += Physics.gravity.y * Time.deltaTime;
     }
 
+    void HandleGrapple(out Vector2 grappleMovementCorrection, ref Vector2 velocity)
+    {
+        grappleMovementCorrection = Vector2.zero;
+
+        if (_grapple == null)
+        {
+            return;
+        }
+
+        if (_grapple.GrappleState != Grapple.GrappleMode.Attached)
+        {
+            return;
+        }
+
+        Vector3 nextFramePos = transform.position + (Vector3)(_velocity * Time.deltaTime);
+        float distanceToAttachment = Vector3.Distance(nextFramePos, _grapple.AttachedPos);
+        if (_grapple.CurrentGrappleDistance < distanceToAttachment)
+        {
+            //correct movement
+            grappleMovementCorrection = (_grapple.AttachedPos - transform.position).normalized * (distanceToAttachment - _grapple.CurrentGrappleDistance);
+
+            //adjust velocity
+            Vector3 oldMovement = (nextFramePos - transform.position);
+            _velocity = (oldMovement + (Vector3)grappleMovementCorrection).normalized * _velocity.magnitude;
+        }
+    }
+
     private void OnJump(InputAction.CallbackContext context)
     {
         _jumpInput = true;
@@ -124,5 +153,10 @@ public class PlayerCharacter : MonoBehaviour
     private void OnMove(InputAction.CallbackContext context)
     {
         _horizontalMovementInput = context.ReadValue<float>();
+    }
+
+    private void OnDrawGizmos()
+    {
+
     }
 }

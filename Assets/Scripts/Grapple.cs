@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 public class Grapple : MonoBehaviour
 {
-    private enum GrappleMode
+    public enum GrappleMode
     {
         None,
         Shooting,
@@ -21,9 +21,13 @@ public class Grapple : MonoBehaviour
 
 
     private Vector3 _shootDirection = Vector3.zero;
+    public float CurrentGrappleDistance { get { return _currentGrappleDistance; } }
     private float _currentGrappleDistance = 0;
+
+    public GrappleMode GrappleState { get { return _grappleState; } }
     private GrappleMode _grappleState = GrappleMode.None;
 
+    public Vector3 AttachedPos { get { return _attachedPos; } }
     private Vector3 _attachedPos = new Vector3();
 
 
