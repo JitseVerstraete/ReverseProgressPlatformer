@@ -97,14 +97,11 @@ public class PlayerCharacter : MonoBehaviour
                 _horizontalMovementInput = Mathf.Clamp(_horizontalMovementInput, -1, 1);
 
                 float accel = _charController.isGrounded ? _acceleration : _acceleration * _airAccelerationModifier;
-                Debug.Log(_airAccelerationModifier);
 
                 vel += ((_charController.isGrounded ? _rightMovementVector : Vector2.right) * (_horizontalMovementInput * accel * Time.deltaTime));
                 vel.x = Mathf.Clamp(vel.x, -_movementSpeed, _movementSpeed);
             }
         }
-
-        //Debug.Log(_charController.isGrounded);
 
         if (_jumpInput)
         {
