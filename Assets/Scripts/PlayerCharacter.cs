@@ -57,7 +57,6 @@ public class PlayerCharacter : MonoBehaviour
         HandleGravity(ref _velocity);
 
         Vector2 grappleMovementCorrection = Vector2.zero;
-        Debug.Log(_velocity);
         HandleGrapple(out grappleMovementCorrection, ref _velocity);
 
 
@@ -132,16 +131,29 @@ public class PlayerCharacter : MonoBehaviour
             return;
         }
 
-        Vector3 nextFramePos = transform.position + (Vector3)(_velocity * Time.deltaTime);
-        float distanceToAttachment = Vector3.Distance(nextFramePos, _grapple.AttachedPos);
+        float distanceToAttachment = Vector3.Distance(transform.position, _grapple.AttachedPos);
         if (_grapple.CurrentGrappleDistance < distanceToAttachment)
         {
             //correct movement
             grappleMovementCorrection = (_grapple.AttachedPos - transform.position).normalized * (distanceToAttachment - _grapple.CurrentGrappleDistance);
 
+            Vector3 correctedPosition = transform.position + (Vector3)grappleMovementCorrection;
+
             //adjust velocity
-            Vector3 oldMovement = (nextFramePos - transform.position);
-            _velocity = (oldMovement + (Vector3)grappleMovementCorrection).normalized * _velocity.magnitude;
+
+            Vector2 grappledir = (correctedPosition - _grapple.AttachedPos);
+            float grappleAngleRad = MathF.Atan2(grappledir.y, grappledir.x);
+
+            Vector2 tanDir = new Vector2(-Mathf.Sin(grappleAngleRad), Mathf.Cos(grappleAngleRad)).normalized;
+
+            float thetaRad = Vector2.Angle(tanDir, _velocity) * Mathf.Deg2Rad;
+
+            Vector2 velocityCorrection = (_velocity.magnitude * MathF.Sin(thetaRad)) * -grappledir.normalized;
+
+            if (Vector2.Dot(velocityCorrection.normalized, _velocity.normalized) < 0)
+            {
+                _velocity += velocityCorrection;
+            }
         }
     }
 
@@ -157,6 +169,7 @@ public class PlayerCharacter : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(transform.position, _velocity / 10);
     }
 }

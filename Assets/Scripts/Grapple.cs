@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 
-
+[RequireComponent(typeof(LineRenderer))]
 public class Grapple : MonoBehaviour
 {
     public enum GrappleMode
@@ -18,6 +18,9 @@ public class Grapple : MonoBehaviour
     [SerializeField] private float _grappleLength = 5f;
     [SerializeField] private float _grappleSpeed = 20f;
     [SerializeField] private float _reelInSpeed = 3f;
+
+
+    private LineRenderer _lineRen = null;
 
 
     private Vector3 _shootDirection = Vector3.zero;
@@ -40,10 +43,14 @@ public class Grapple : MonoBehaviour
         _controls.Player.Grapple.started += OnGrapple;
         _controls.Player.Grapple.canceled += OnGrapple;
         _controls.Player.Grapple.Enable();
+        _lineRen = GetComponent<LineRenderer>();
     }
 
     void Update()
     {
+        Vector3[] positions = new Vector3[] { transform.position, _hook.transform.position };
+        _lineRen.SetPositions(positions);
+
         switch (_grappleState)
         {
             case GrappleMode.None:
@@ -107,7 +114,7 @@ public class Grapple : MonoBehaviour
         Gizmos.color = Color.blue;
         if (_grappleState == GrappleMode.Attached)
         {
-            Gizmos.DrawLine(transform.position, _attachedPos);
+            //Gizmos.DrawLine(transform.position, _attachedPos);
         }
     }
 
